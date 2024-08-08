@@ -1,0 +1,45 @@
+pragma solidity ^0.8.9;
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+
+
+contract RAgniToken is ERC20, ERC20Burnable,Ownable {
+
+    event SetWhiteFromList(address indexed user, bool state);
+    event SetWhiteToList(address indexed user, bool state);
+
+    mapping(address => bool) public whiteFromList;
+    mapping(address => bool) public whiteToList;
+
+
+    constructor() ERC20("rAGNI", "rAGNI") {
+        whiteFromList[msg.sender] = true;
+        whiteToList[msg.sender] = true;
+        _mint(msg.sender, 3_000_000 * 10 ** decimals());
+    }
+
+    function mint(address account, uint256 amount)
+    external
+    virtual
+    onlyOwner
+    {
+        _mint(account, amount);
+    }
+
+    function setWhiteFromList(address addr_, bool state_) external onlyOwner {
+        whiteFromList[addr_] = state_;
+        emit SetWhiteFromList(addr_, state_);
+    }
+    function setWhiteToList(address addr_, bool state_) external onlyOwner {
+        whiteToList[addr_] = state_;
+        emit SetWhiteToList(addr_, state_);
+    }
+
+    function _beforeTokenTransfer(address from, address to, uint256 amount) internal override {
+        require(whiteFromList[from] || whiteToList[to], "rAGNI: invalid caller");
+        super._beforeTokenTransfer(from, to, amount);
+    }
+}
